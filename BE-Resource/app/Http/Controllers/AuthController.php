@@ -5,7 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
-
+use Laravel\Socialite\Facades\Socialite;
 class AuthController extends Controller
 {
     public function Register(Request $request)
@@ -24,7 +24,7 @@ class AuthController extends Controller
         ]);
         return response()->json([
             'message'=>'Tạo mới tài khoản thành công',
-            'user' => $user
+            'user' => $user->only(['id', 'full_name', 'email'])
         ],201);
     }
 
@@ -42,7 +42,7 @@ class AuthController extends Controller
         return response()->json([
             'message' => 'Đăng nhập thành công',
             'token' => $token,
-            'user' => $user
+            'user' => $user->only(['id', 'full_name', 'email'])
         ]);
     }
 

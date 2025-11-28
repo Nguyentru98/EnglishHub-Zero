@@ -1,5 +1,5 @@
 <template>
-  <div style="background-color: aliceblue;">
+  <div>
     <h2>Danh sách người dùng</h2>
     <ul>
       <li v-for="u in users" :key="u.id">{{ u.full_name }} - {{ u.email }}</li>

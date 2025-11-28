@@ -11,7 +11,7 @@
                 <div class="form-group">
                     <label for="email" class="form-label">Email</label>
                     <input 
-                        v-model="email"
+                        :email="email"
                         type="email" 
                         class="form-control" 
                         id="email" 
@@ -23,7 +23,7 @@
                 <div class="form-group">
                     <label for="password" class="form-label">Mật khẩu</label>
                     <input 
-                        v-model="password"
+                        :password="password"
                         type="password" 
                         class="form-control" 
                         id="password" 
@@ -47,8 +47,6 @@
                         <a href="#forgot">Quên mật khẩu?</a>
                     </div>
                 </div>
-
-                <button type="submit" class="btn btn-login">Đăng Nhập</button>
             </form>
 
             <div class="signup-link">

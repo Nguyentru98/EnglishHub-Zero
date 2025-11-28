@@ -18,8 +18,8 @@ use Illuminate\Support\Facades\Route;
 Route::prefix('user')->group(function() {
     Route::post('/register',[AuthController::class,'register']);
     Route::post('/login',[AuthController::class,'login']);
-
-
+    Route::get('/loginGg',[AuthController::class,'redirectToGoogle']);
+    
     Route::middleware('auth:sanctum')->group(function() {
         Route::post('/logout',[AuthController::class,'logout']);
         Route::get('list',[UserController::class,'list']);
