@@ -1,6 +1,6 @@
 <script setup>
-import { computed, onMounted, reactive, ref, watch, watchEffect } from 'vue'
-
+import { computed, onMounted,onUnmounted, reactive, ref, watch, watchEffect } from 'vue'
+import VoucherComponent from './VoucherComponent.vue'
 // danh sách sản phẩm
 const listProduct = reactive([
   {
@@ -89,19 +89,50 @@ function addToCart(id) {
     product.quantity--
   }
 }
-
-
 function deleteCart() {
   carts.items = [];
   carts.totalQuantity = 0;
   localStorage.removeItem('my-cart')
 }
+// ví dụ về life cycle
+const timeLeft = ref(20) // 20s
+let timerId = null
+const expiry = ref(true)
+
+onMounted(() => {
+  console.log("Run")
+  timerId = setInterval(() => {
+    console.log("process...")
+    if (timeLeft.value > 0) {
+      timeLeft.value--
+    } else {
+      console.log('hết hạn sử dụng voucher')
+      expiry.value = false;
+      clearInterval(timerId)
+    }
+  }, 1000)
+})
+
+// trường hợp thoát khỏi component này thì sẽ clearInterval nếu không có onUnmounted thì sang commponent khác sẽ vẫn chạy setInterval() thời gian vẫn được tính
+onUnmounted(() => {
+  if (timerId) {
+    console.log('clean completed')
+    clearInterval(timerId)   // tránh memory leak
+  } 
+})
 </script>
 
 <template>
   <div>
     <div class="list_product">
       <h3>Danh sách sản phẩm</h3>
+      <div class="flash-sale">
+        <p>Khuyến mãi kết thúc trong: {{ Math.floor(timeLeft / 60) }}:{{
+            String(timeLeft % 60).padStart(2, '0')
+          }}
+        </p>
+        <VoucherComponent v-if="expiry"/>
+      </div>
       Tìm kiếm
       <input type="text" class="border" v-model="keySearch">
       <ul v-if="filter.length">
