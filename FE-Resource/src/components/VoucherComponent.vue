@@ -2,7 +2,7 @@
   <div>Voucher còn hiệu lực</div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { onMounted, onUnmounted } from 'vue'
 onMounted(
     ()=>{
@@ -12,4 +12,6 @@ onMounted(
 onUnmounted(() => {
   console.log("VoucherComponent đã bị unmount!")
 })
+
+
 </script>

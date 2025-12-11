@@ -16,3 +16,12 @@ use Illuminate\Support\Facades\Route;
 Route::get('/', function () {
     return view('welcome');
 });
+Route::get('/test-event', function () {
+    $user = new \App\Models\User;
+    $user->name  = 'Hương';
+    $user->email = 'huong@gmail.com';
+
+    event(new App\Events\UserRegistered($user));
+
+    return "Event đã phát! Có tên rồi nè";
+});

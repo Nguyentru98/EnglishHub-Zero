@@ -1,124 +1,126 @@
-<script setup>
-import { computed, onMounted,onUnmounted, reactive, ref, watch, watchEffect } from 'vue'
+<script setup lang="ts">
+import { computed, onMounted, onUnmounted, reactive, ref, watch } from 'vue'
 import VoucherComponent from './VoucherComponent.vue'
-// danh sách sản phẩm
-const listProduct = reactive([
-  {
-    id: 1,
-    name: 'áo phông',
-    price: 100000,
-    quantity: 4,
-  },
-  {
-    id: 2,
-    name: 'áo sơ mi',
-    price: 250000,
-    quantity: 3,
-  },
-  {
-    id: 3,
-    name: 'áo hodie',
-    price: 100000,
-    quantity: 7,
-  },
-  {
-    id: 4,
-    name: 'quần âu',
-    price: 100000,
-    quantity: 4,
-  },
+
+// === 1. Định nghĩa interface (bắt buộc khi dùng TS) ===
+interface Product {
+  id: number
+  name: string
+  price: number
+  quantity: number
+}
+
+interface CartItem extends Product {
+  quantity: number // số lượng trong giỏ
+}
+
+// === 2. Danh sách sản phẩm ===
+const listProduct = reactive<Product[]>([
+  { id: 1, name: 'áo phông', price: 100000, quantity: 4 },
+  { id: 2, name: 'áo sơ mi', price: 250000, quantity: 3 },
+  { id: 3, name: 'áo hodie', price: 400000, quantity: 7 },
+  { id: 4, name: 'quần âu', price: 350000, quantity: 4 },
 ])
-// giỏ hàng - reactive()
-const carts = reactive(
-  {
-    items : [],
-    totalQuantity : 0,
-  }
-)
-// tự động tính tổng tiền hàng trong giỏ - computed()
-const totalPrice = computed(() => {
-  return carts.items.reduce((sum,currentValue) => sum + currentValue.price * currentValue.quantity,0)
+
+// === 3. Giỏ hàng ===
+const carts = reactive<{
+  items: CartItem[]
+  totalQuantity: number
+}>({
+  items: [],
+  totalQuantity: 0,
 })
-// tự động serch
+
+// === 4. Computed: Tổng tiền ===
+const totalPrice = computed(() => {
+  return carts.items.reduce((sum, item) => sum + item.price * item.quantity, 0)
+})
+
+// === 5. Tìm kiếm sản phẩm ===
 const keySearch = ref('')
-const filter = computed(
-  ()=>{
-    const product = listProduct.filter(item=>item.name == keySearch.value)
-    console.log(keySearch.value);
-    return product;
-  }
-)
-// theo dõi giỏ hàng lưu vào locale storage -  watch()
+const filter = computed(() => {
+  if (!keySearch.value.trim()) return listProduct
+  return listProduct.filter(item =>
+    item.name.toLowerCase().includes(keySearch.value.toLowerCase())
+  )
+})
+
+// === 6. Lưu giỏ hàng vào localStorage (SAI TRONG BẢN GỐC!) ===
 watch(
-  ()=>carts,
-  (newItem)=>{
-    localStorage.setItem('my-cart',JSON.stringify(newItem))
-    console.log('Đã lưu giỏ hàng!',newItem)
+  () => ({ ...carts }), // clone để watch deep chính xác
+  (newVal) => {
+    localStorage.setItem('my-cart', JSON.stringify(newVal))
+    console.log('Đã lưu giỏ hàng!', newVal)
   },
   { deep: true }
 )
-// luôn chạy lần đầu, lần tiếp theo khi biến xảy ra phản ứng
-watchEffect(
-  ()=>carts.items,
-  ()=>{
-    const cartLocale = localStorage.getItem('my-cart');
-    if(cartLocale) {
-      const data = JSON.parse(cartLocale);
-      carts.items = data.items;
-      carts.totalQuantity = cartLocale.totalQuantity
-    }
-    
-  },
-)
-// thêm sản phẩm vào giỏ hàng - fn()
-function addToCart(id) {
-  const product = listProduct.find(pr => id === pr.id)
-  const checkExist = carts.items.find(pr => id === pr.id )
-  if(checkExist) {
-    checkExist.quantity++
-    carts.totalQuantity++
-    product.quantity--
-  }else{
-    carts.items.push({
-      id:product.id,
-      name:product.name,
-      price:product.price,
-      quantity:1,
-    })
-    carts.totalQuantity++
-    product.quantity--
+
+// === 7. Load giỏ hàng khi khởi động (sửa lỗi watchEffect sai hoàn toàn) ===
+onMounted(() => {
+  const saved = localStorage.getItem('my-cart')
+  if (saved) {
+    const data = JSON.parse(saved)
+    carts.items = data.items ?? []
+    carts.totalQuantity = data.totalQuantity ?? 0
+    console.log('Đã khôi phục giỏ hàng từ localStorage')
   }
+})
+
+// === 8. Thêm vào giỏ hàng ===
+function addToCart(id: number) {
+  const product = listProduct.find(p => p.id === id)
+  if (!product || product.quantity <= 0) {
+    alert('Sản phẩm hết hàng!')
+    return
+  }
+
+  const existItem = carts.items.find(item => item.id === id)
+  if (existItem) {
+    existItem.quantity++
+  } else {
+    carts.items.push({
+      id: product.id,
+      name: product.name,
+      price: product.price,
+      quantity: 1,
+    })
+  }
+
+  carts.totalQuantity++
+  product.quantity-- // giảm tồn kho
 }
+
+// === 9. Xóa giỏ hàng ===
 function deleteCart() {
-  carts.items = [];
-  carts.totalQuantity = 0;
+  carts.items = []
+  carts.totalQuantity = 0
   localStorage.removeItem('my-cart')
 }
-// ví dụ về life cycle
-const timeLeft = ref(20) // 20s
-let timerId = null
+
+// === 10. Đếm ngược voucher ===
+const timeLeft = ref(20)
 const expiry = ref(true)
+let timerId: number | null = null
 
 onMounted(() => {
-  console.log("Run")
+  console.log('Component được mount')
   timerId = setInterval(() => {
-    console.log("process...")
     if (timeLeft.value > 0) {
       timeLeft.value--
     } else {
-      console.log('hết hạn sử dụng voucher')
-      expiry.value = false;
-      clearInterval(timerId)
+      expiry.value = false
+      clearInterval(timerId!)
+      timerId = null
+      console.log('Voucher đã hết hạn!')
     }
   }, 1000)
 })
 
-// trường hợp thoát khỏi component này thì sẽ clearInterval nếu không có onUnmounted thì sang commponent khác sẽ vẫn chạy setInterval() thời gian vẫn được tính
 onUnmounted(() => {
-  if (timerId) {
-    console.log('clean completed')
-    clearInterval(timerId)   // tránh memory leak
-  } 
+  if (timerId !== null) {
+    clearInterval(timerId)
+    console.log('Đã dọn dẹp timer – tránh memory leak')
+  }
 })
 </script>
 

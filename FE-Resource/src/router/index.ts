@@ -2,6 +2,7 @@ import { createRouter, createWebHistory } from 'vue-router'
 import DashboardView from '@/views/dashboard/DashboardView.vue'
 import ReactivityComponent from '@/components/ReactivityComponent.vue'
 import App from '@/App.vue'
+import ProductList from '@/components/ProductList.vue'
 
 
 const router = createRouter({
@@ -17,8 +18,14 @@ const router = createRouter({
             name: 'reactivity',
             component: ReactivityComponent,
           },
+          {
+            path: '/list',
+            name: 'list_product',
+            component: ProductList,
+          },
       ]
     },
+    
     
     // {
     //   path: '/',
